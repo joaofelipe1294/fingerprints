@@ -50,10 +50,87 @@ class BaseLoader(object):
 			equalized_images.append(equalized_image)
 		return equalized_images
 
+	def orientation(self , image , median_kernel_size , sobel_kernel_size):
+		median_image = cv2.medianBlur(image , median_kernel_size)
+		gx = cv2.Sobel(image,cv2.CV_64F,1,0,ksize=sobel_kernel_size)
+		gy = cv2.Sobel(image,cv2.CV_64F,0,1,ksize=sobel_kernel_size)
+		cv2.imshow('median' , median_image)
+		cv2.imshow('gx' , gx)
+		cv2.imshow('gy' , gy)
+		cv2.waitKey(0)
+		ax = (gx * gx) - (gy * gy)
 
-base = BaseLoader('DB1_2000')
-#print(base.image_paths)
+		ay = 2 * gx * gy
+
+		
+
+base = BaseLoader('test')
 enhanced_images = base.enhancement()
+base.orientation(enhanced_images[0] ,5 ,  3)
+
+
+
+
+
+
+
+
+
+
+
+
+
+image = base.images[0]
+print(image)
+k_height = k_width = 11
+blocks = []
+image_height ,image_width = image.shape
+for x_axis in xrange(0,image_height , k_height):
+	for y_axis in xrange(0,image_width , k_width):
+		seed = tuple([x_axis , y_axis])
+		block = []
+		#print(seed)
+		for i in xrange(seed[0],seed[0] + k_height):
+			for j in xrange(seed[1],seed[1] + k_width):
+				if i >= image_height:
+					i = image_height - 1
+				if j >= image_width:
+					j = image_width - 1
+				print("i : " + str(i) + " | j : " + str(j))
+				block.append(image.item(i,j))
+		#print(block)
+		blocks.append(block)
+print(len(blocks))
+#for block in blocks:
+#	print(len(block))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #for image in enhanced_images[1]:
 #	cv2.imshow('image' , image)
 #	cv2.waitKey(0)
@@ -62,7 +139,10 @@ enhanced_images = base.enhancement()
 #	cv2.imshow('image' , image)
 #	cv2.waitKey(100)
 
-cv2.imshow('original' , base.images[0])
-cv2.imshow('enhanced' ,  enhanced_images[0])
-cv2.imshow('median' , median_filter(enhanced_images[0] , 5))
-cv2.waitKey(0)
+#cv2.imshow('original' , base.images[0])
+#cv2.imshow('enhanced' ,  enhanced_images[0])
+#cv2.imshow('median' , base.orientation(enhanced_images[0] , 5))
+"""gx , gy = base.orientation(enhanced_images[0] , 5)
+cv2.imshow('gx' , gx)
+cv2.imshow('gy' , gy)
+cv2.waitKey(0)"""
