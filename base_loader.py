@@ -1,7 +1,6 @@
 import os
 import cv2
 import numpy as np
-from median import median_filter
 
 class BaseLoader(object):
 
@@ -41,7 +40,7 @@ class BaseLoader(object):
 		print("enhancement completed")
 		return enhanced_images
 
-	def equalization(self):
+	def equalize(self):
 		equalized_images = []
 		for image in self.images:
 			height , width = image.shape
@@ -50,17 +49,42 @@ class BaseLoader(object):
 			equalized_images.append(equalized_image)
 		return equalized_images
 
+	def devide_into_blocks(self , image , block_size):
+		blocks = []
+		image_height ,image_width = image.shape[:2]
+		for x_axis in xrange(0,image_height , block_size):
+			for y_axis in xrange(0,image_width , block_size):
+				seed = tuple([x_axis , y_axis])
+				block = []
+				for i in xrange(seed[0],seed[0] + block_size):
+					for j in xrange(seed[1],seed[1] + block_size):
+						if i >= image_height:
+							i = image_height - 1
+						if j >= image_width:
+							j = image_width - 1
+						#print("i : " + str(i) + " | j : " + str(j))
+						block.append(image.item(i,j))
+				blocks.append(block)
+		#print(len(blocks))
+		return blocks
+
 	def orientation(self , image , median_kernel_size , sobel_kernel_size):
 		median_image = cv2.medianBlur(image , median_kernel_size)
 		gx = cv2.Sobel(image,cv2.CV_64F,1,0,ksize=sobel_kernel_size)
 		gy = cv2.Sobel(image,cv2.CV_64F,0,1,ksize=sobel_kernel_size)
-		cv2.imshow('median' , median_image)
-		cv2.imshow('gx' , gx)
-		cv2.imshow('gy' , gy)
-		cv2.waitKey(0)
-		ax = (gx * gx) - (gy * gy)
-
-		ay = 2 * gx * gy
+		gx_blocks = self.devide_into_blocks(gx , 11)
+		gy_blocks = self.devide_into_blocks(gy , 11)
+		x_orientations = []
+		y_orientetions = []
+		for   block_index in range(0 , len(gx_blocks)):
+			gx_block = np.array(gx_blocks[block_index] , np.uint8)
+			gy_block = np.array(gy_blocks[block_index] , np.uint8)
+			a_x = int(np.sum(abs((gx_block * gx_block) - (gy_block * gy_block))) / (11 * 11))
+			a_y = int(np.sum(abs(2 * gx_block * gy_block)) / (11 * 11))
+			x_orientations.append(a_x)
+			y_orientetions.append(a_y)
+		print(x_orientations)
+		print(y_orientetions)
 
 		
 
@@ -80,11 +104,12 @@ base.orientation(enhanced_images[0] ,5 ,  3)
 
 
 
-image = base.images[0]
-print(image)
+"""image = base.images[0]
 k_height = k_width = 11
 blocks = []
-image_height ,image_width = image.shape
+image_height ,image_width = image.shape[:2]
+print(image_height)
+print(image_width)
 for x_axis in xrange(0,image_height , k_height):
 	for y_axis in xrange(0,image_width , k_width):
 		seed = tuple([x_axis , y_axis])
@@ -100,7 +125,8 @@ for x_axis in xrange(0,image_height , k_height):
 				block.append(image.item(i,j))
 		#print(block)
 		blocks.append(block)
-print(len(blocks))
+print(len(blocks))"""
+
 #for block in blocks:
 #	print(len(block))
 
